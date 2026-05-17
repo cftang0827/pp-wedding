@@ -1,0 +1,14 @@
+<svg width="1200" height="1440" viewBox="0 0 1200 1440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1440" fill="#F6EADF"/>
+  <rect x="58" y="58" width="1084" height="1324" rx="40" stroke="#D2B29B" stroke-width="4"/>
+  <circle cx="360" cy="480" r="176" fill="#E2C7B4"/>
+  <circle cx="830" cy="442" r="158" fill="#DAB197"/>
+  <path d="M242 1084C285 905 414 822 551 822C688 822 798 920 826 1084H242Z" fill="#FFF8F1"/>
+  <path d="M602 1084C648 894 789 778 935 778C1053 778 1140 861 1160 1084H602Z" fill="#B68469"/>
+  <path d="M410 664C410 566 475 510 556 510C637 510 702 566 702 664V826H410V664Z" fill="#FFFDF9"/>
+  <path d="M724 622C724 532 783 486 852 486C921 486 980 532 980 622V782H724V622Z" fill="#6F4B38"/>
+  <path d="M127 1188C224 1067 376 996 532 996C686 996 840 1067 938 1188" stroke="#DAB197" stroke-width="8" stroke-linecap="round"/>
+  <path d="M683 1168C762 1068 884 1008 1011 1008C1074 1008 1131 1021 1180 1048" stroke="#E7C6AF" stroke-width="8" stroke-linecap="round"/>
+  <text x="600" y="1280" text-anchor="middle" fill="#8D6146" font-family="Georgia, serif" font-size="50" letter-spacing="12">YOUR PHOTO HERE</text>
+  <text x="600" y="1342" text-anchor="middle" fill="#A78571" font-family="Georgia, serif" font-size="26" letter-spacing="6">replace src/assets/couple-photo.svg with your wedding portrait</text>
+</svg>
