@@ -19,13 +19,12 @@ const wedding = {
   bride: 'Peggy',
   groomZh: '智帆',
   brideZh: '瑩庭',
-  title: '誠摯邀請你一同見證我們的重要時刻',
   date: '2026-10-25T12:00:00+08:00',
   venue: '彭園新板館',
   address: '點擊下方地圖查看場地位置',
   ceremony: '12:00 午宴入席',
   banquet: '12:30 午宴開始',
-  note: '期待在這一天，與你一起見證我們人生最重要的時刻。',
+  note: ['期待在這一天', '與你一起見證我們人生最重要的時刻'],
   mapUrl: 'https://maps.app.goo.gl/iYmfKt6GPxBbnfE17',
   rsvpUrl: 'https://forms.gle/D83uadHrTu8xJCXMA',
   schedule: [
@@ -39,11 +38,14 @@ const wedding = {
 const targetTime = new Date(wedding.date).getTime()
 const now = ref(Date.now())
 const activePhotoIndex = ref(0)
+const isLightboxOpen = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
 let timerId
+let previousBodyOverflow = ''
 
 const activePhoto = computed(() => activePhotoIndex.value + 1)
+const activePhotoItem = computed(() => albumPhotos[activePhotoIndex.value])
 
 function showPhoto(index) {
   if (!albumPhotos.length) return
@@ -56,6 +58,26 @@ function showPreviousPhoto() {
 
 function showNextPhoto() {
   showPhoto(activePhotoIndex.value + 1)
+}
+
+function openLightbox(index) {
+  showPhoto(index)
+  previousBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  isLightboxOpen.value = true
+}
+
+function closeLightbox() {
+  document.body.style.overflow = previousBodyOverflow
+  isLightboxOpen.value = false
+}
+
+function handleKeydown(event) {
+  if (!isLightboxOpen.value) return
+
+  if (event.key === 'Escape') closeLightbox()
+  if (event.key === 'ArrowLeft') showPreviousPhoto()
+  if (event.key === 'ArrowRight') showNextPhoto()
 }
 
 function handleTouchStart(event) {
@@ -94,23 +116,26 @@ const remaining = computed(() => {
 })
 
 const weddingDate = computed(() => {
-  return new Intl.DateTimeFormat('zh-TW', {
+  const date = new Intl.DateTimeFormat('zh-TW', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
   }).format(new Date(wedding.date))
+
+  return `${date} 中午12:00`
 })
 
 onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
   timerId = window.setInterval(() => {
     now.value = Date.now()
   }, 1000)
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = previousBodyOverflow
   window.clearInterval(timerId)
 })
 </script>
@@ -120,9 +145,12 @@ onBeforeUnmount(() => {
     <section class="invite-card">
       <div class="hero">
         <p class="eyebrow">Wedding Invitation</p>
-        <p class="chinese-title">{{ wedding.groomZh }} &amp; {{ wedding.brideZh }} 的婚禮</p>
         <h1>{{ wedding.groom }} &amp; {{ wedding.bride }}</h1>
-        <p class="subtitle">{{ wedding.title }}</p>
+        <img
+          class="chinese-title-art"
+          src="./assets/chinese-title.png"
+          alt="智帆與瑩庭手寫簽名"
+        />
       </div>
 
       <div class="album-frame" aria-label="婚紗照相簿">
@@ -136,10 +164,16 @@ onBeforeUnmount(() => {
             :style="{ transform: `translateX(-${activePhotoIndex * 100}%)` }"
           >
             <img
-              v-for="photo in albumPhotos"
+              v-for="(photo, index) in albumPhotos"
               :key="photo.src"
               :src="photo.src"
               :alt="photo.alt"
+              role="button"
+              :tabindex="index === activePhotoIndex ? 0 : -1"
+              aria-label="開啟照片大圖"
+              @click="openLightbox(index)"
+              @keydown.enter="openLightbox(index)"
+              @keydown.space.prevent="openLightbox(index)"
             />
           </div>
         </div>
@@ -181,7 +215,10 @@ onBeforeUnmount(() => {
 
       <section class="panel rsvp-panel">
         <p class="panel-label">出席回覆</p>
-        <p>期待與你一起分享這一天的喜悅，請協助填寫婚禮出席表單。</p>
+        <p>
+          期待與你一起分享這一天的喜悅<br />
+          請協助填寫婚禮出席表單
+        </p>
         <a class="primary-button" :href="wedding.rsvpUrl" target="_blank" rel="noreferrer">
           填寫出席表單
         </a>
@@ -229,8 +266,50 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="closing">
-        <p>{{ wedding.note }}</p>
+        <p>
+          <template v-for="(line, index) in wedding.note" :key="line">
+            {{ line }}<br v-if="index < wedding.note.length - 1" />
+          </template>
+        </p>
       </section>
     </section>
   </main>
+
+  <Teleport to="body">
+    <div
+      v-if="isLightboxOpen"
+      class="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="婚紗照大圖"
+      @click.self="closeLightbox"
+    >
+      <button class="lightbox-close" type="button" aria-label="關閉大圖" @click="closeLightbox">
+        ×
+      </button>
+      <button
+        class="lightbox-control lightbox-control-prev"
+        type="button"
+        aria-label="上一張照片"
+        @click="showPreviousPhoto"
+      >
+        ‹
+      </button>
+      <img
+        v-if="activePhotoItem"
+        class="lightbox-image"
+        :src="activePhotoItem.src"
+        :alt="activePhotoItem.alt"
+      />
+      <button
+        class="lightbox-control lightbox-control-next"
+        type="button"
+        aria-label="下一張照片"
+        @click="showNextPhoto"
+      >
+        ›
+      </button>
+      <p class="lightbox-count">{{ activePhoto }} / {{ albumPhotos.length }}</p>
+    </div>
+  </Teleport>
 </template>
