@@ -84,6 +84,8 @@ button {
 }
 
 .hero {
+  position: relative;
+  z-index: 1;
   text-align: center;
   padding: 12px 8px 4px;
 }
@@ -130,6 +132,8 @@ button {
 }
 
 .album-viewport {
+  position: relative;
+  z-index: 1;
   aspect-ratio: 4 / 5;
   border-radius: 28px;
   overflow: hidden;
@@ -175,6 +179,13 @@ button {
   font-size: 2rem;
   line-height: 1;
   transform: translateY(-50%);
+}
+
+.album-control > span[aria-hidden='true'],
+.lightbox-control > span[aria-hidden='true'] {
+  display: block;
+  line-height: 0.72;
+  transform: translateY(-0.06em);
 }
 
 .album-control-prev {
@@ -291,6 +302,8 @@ button {
 }
 
 .panel {
+  position: relative;
+  overflow: hidden;
   margin-top: 18px;
   padding: 18px;
   border: 1px solid var(--line);

@@ -179,11 +179,11 @@ onBeforeUnmount(() => {
         </div>
 
         <button class="album-control album-control-prev" type="button" @click="showPreviousPhoto">
-          ‹
+          <span aria-hidden="true">‹</span>
           <span class="sr-only">上一張照片</span>
         </button>
         <button class="album-control album-control-next" type="button" @click="showNextPhoto">
-          ›
+          <span aria-hidden="true">›</span>
           <span class="sr-only">下一張照片</span>
         </button>
 
@@ -244,7 +244,6 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="panel detail-panel">
-        <p class="panel-label">當日安排</p>
         <div class="pill-group">
           <span class="pill">{{ wedding.ceremony }}</span>
           <span class="pill">{{ wedding.banquet }}</span>
@@ -293,7 +292,7 @@ onBeforeUnmount(() => {
         aria-label="上一張照片"
         @click="showPreviousPhoto"
       >
-        ‹
+        <span aria-hidden="true">‹</span>
       </button>
       <img
         v-if="activePhotoItem"
@@ -307,7 +306,7 @@ onBeforeUnmount(() => {
         aria-label="下一張照片"
         @click="showNextPhoto"
       >
-        ›
+        <span aria-hidden="true">›</span>
       </button>
       <p class="lightbox-count">{{ activePhoto }} / {{ albumPhotos.length }}</p>
     </div>
