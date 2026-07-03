@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const albumModules = import.meta.glob('./assets/albums/*.{jpg,jpeg,png,webp}', {
   eager: true,
@@ -20,10 +20,10 @@ const wedding = {
   groomZh: '智帆',
   brideZh: '瑩庭',
   date: '2026-10-25T12:00:00+08:00',
-  venue: '彭園新板館',
-  address: '點擊下方地圖查看場地位置',
-  ceremony: '12:00 午宴入席',
-  banquet: '12:30 午宴開始',
+  venue: '彭園新板館(八樓花園廳)',
+  address: '新北市板橋區中山路一段161號8樓\n(新北市政府大樓北二門)\n搭乘 21,22,23 號專屬電梯',
+  ceremony: '11:30 午宴入席',
+  banquet: '12:00 午宴開始',
   note: ['期待在這一天', '與你一起見證我們人生最重要的時刻'],
   mapUrl: 'https://maps.app.goo.gl/iYmfKt6GPxBbnfE17',
   rsvpUrl: 'https://forms.gle/D83uadHrTu8xJCXMA',
@@ -38,6 +38,10 @@ const wedding = {
 const targetTime = new Date(wedding.date).getTime()
 const now = ref(Date.now())
 const activePhotoIndex = ref(0)
+const albumTrackIndex = ref(albumPhotos.length > 1 ? 1 : 0)
+const isAlbumTransitionEnabled = ref(true)
+const isAlbumAnimating = ref(false)
+const albumTrackElement = ref(null)
 const isLightboxOpen = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
@@ -46,18 +50,88 @@ let previousBodyOverflow = ''
 
 const activePhoto = computed(() => activePhotoIndex.value + 1)
 const activePhotoItem = computed(() => albumPhotos[activePhotoIndex.value])
+const renderedAlbumPhotos = computed(() => {
+  if (albumPhotos.length <= 1) return albumPhotos.map((photo, index) => ({ ...photo, index }))
+
+  const firstPhoto = albumPhotos[0]
+  const lastPhoto = albumPhotos[albumPhotos.length - 1]
+
+  return [
+    { ...lastPhoto, index: albumPhotos.length - 1, clone: 'last' },
+    ...albumPhotos.map((photo, index) => ({ ...photo, index })),
+    { ...firstPhoto, index: 0, clone: 'first' },
+  ]
+})
+
+async function resetAlbumTrack(index) {
+  isAlbumTransitionEnabled.value = false
+  albumTrackIndex.value = index
+  isAlbumAnimating.value = false
+  await nextTick()
+  albumTrackElement.value?.getBoundingClientRect()
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      isAlbumTransitionEnabled.value = true
+    })
+  })
+}
 
 function showPhoto(index) {
   if (!albumPhotos.length) return
+  if (isAlbumAnimating.value && !isLightboxOpen.value) return
+
+  isAlbumTransitionEnabled.value = true
   activePhotoIndex.value = (index + albumPhotos.length) % albumPhotos.length
+  albumTrackIndex.value = albumPhotos.length > 1 ? activePhotoIndex.value + 1 : activePhotoIndex.value
+  isAlbumAnimating.value = false
 }
 
 function showPreviousPhoto() {
-  showPhoto(activePhotoIndex.value - 1)
+  if (albumPhotos.length <= 1) return
+
+  if (isLightboxOpen.value) {
+    showPhoto(activePhotoIndex.value - 1)
+    return
+  }
+
+  if (isAlbumAnimating.value) return
+
+  isAlbumTransitionEnabled.value = true
+  isAlbumAnimating.value = true
+  activePhotoIndex.value = (activePhotoIndex.value - 1 + albumPhotos.length) % albumPhotos.length
+  albumTrackIndex.value -= 1
 }
 
 function showNextPhoto() {
-  showPhoto(activePhotoIndex.value + 1)
+  if (albumPhotos.length <= 1) return
+
+  if (isLightboxOpen.value) {
+    showPhoto(activePhotoIndex.value + 1)
+    return
+  }
+
+  if (isAlbumAnimating.value) return
+
+  isAlbumTransitionEnabled.value = true
+  isAlbumAnimating.value = true
+  activePhotoIndex.value = (activePhotoIndex.value + 1) % albumPhotos.length
+  albumTrackIndex.value += 1
+}
+
+function handleAlbumTransitionEnd(event) {
+  if (event.propertyName !== 'transform' || albumPhotos.length <= 1) return
+
+  if (albumTrackIndex.value === albumPhotos.length + 1) {
+    resetAlbumTrack(1)
+    return
+  }
+
+  if (albumTrackIndex.value === 0) {
+    resetAlbumTrack(albumPhotos.length)
+    return
+  }
+
+  isAlbumAnimating.value = false
 }
 
 function openLightbox(index) {
@@ -160,20 +234,23 @@ onBeforeUnmount(() => {
           @touchend.passive="handleTouchEnd"
         >
           <div
+            ref="albumTrackElement"
             class="album-track"
-            :style="{ transform: `translateX(-${activePhotoIndex * 100}%)` }"
+            :class="{ 'album-track-instant': !isAlbumTransitionEnabled }"
+            :style="{ transform: `translateX(-${albumTrackIndex * 100}%)` }"
+            @transitionend="handleAlbumTransitionEnd"
           >
             <img
-              v-for="(photo, index) in albumPhotos"
-              :key="photo.src"
+              v-for="(photo, index) in renderedAlbumPhotos"
+              :key="`${photo.src}-${photo.clone ?? 'photo'}-${index}`"
               :src="photo.src"
               :alt="photo.alt"
               role="button"
-              :tabindex="index === activePhotoIndex ? 0 : -1"
+              :tabindex="photo.index === activePhotoIndex && !photo.clone ? 0 : -1"
               aria-label="開啟照片大圖"
-              @click="openLightbox(index)"
-              @keydown.enter="openLightbox(index)"
-              @keydown.space.prevent="openLightbox(index)"
+              @click="openLightbox(photo.index)"
+              @keydown.enter="openLightbox(photo.index)"
+              @keydown.space.prevent="openLightbox(photo.index)"
             />
           </div>
         </div>

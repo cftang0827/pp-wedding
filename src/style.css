@@ -149,6 +149,10 @@ button {
   transition: transform 420ms ease;
 }
 
+.album-track-instant {
+  transition: none;
+}
+
 .album-track img {
   flex: 0 0 100%;
   width: 100%;
@@ -189,11 +193,11 @@ button {
 }
 
 .album-control-prev {
-  left: 12px;
+  left: -18px;
 }
 
 .album-control-next {
-  right: 12px;
+  right: -18px;
 }
 
 .album-footer {
@@ -357,6 +361,7 @@ button {
 .info-row strong {
   font-size: 1rem;
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 .rsvp-panel p:not(.panel-label) {
@@ -512,6 +517,14 @@ button {
 
   .album-frame {
     width: min(100%, 430px);
+  }
+
+  .album-control-prev {
+    left: -24px;
+  }
+
+  .album-control-next {
+    right: -24px;
   }
 
   .panel {
